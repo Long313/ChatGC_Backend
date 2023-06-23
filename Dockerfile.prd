@@ -1,0 +1,12 @@
+FROM node:lts AS dist
+COPY package.json  ./
+
+RUN yarn install
+
+COPY . ./
+
+RUN yarn build:prod
+
+EXPOSE $PORT
+
+CMD [ "yarn", "start:prod" ]

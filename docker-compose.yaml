@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  #Database
+  chatgc-mongodb:
+    image: mongo
+    container_name: chatgc-mongodb
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_DATABASE=admin
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      # seeding scripts
+      - ./mongo-entrypoint:/docker-entrypoint-initdb.d
+      # named volumes
+      - mongodb:/data/db
+      - mongoconfig:/data/configdb
+      - ./rs-init.sh:/scripts/rs-init.sh
+    networks:
+      - chatgc
+    entrypoint: ['/usr/bin/mongod', '--bind_ip_all', '--replSet', 'dbrs']
+
+  #API
+  chatgc-api:
+    env_file:
+      - .env
+    restart: always
+    build: .
+    ports:
+      # api port
+      - 3080:8000
+      # socket port
+      - 81:81
+    links:
+      - chatgc-mongodb
+    networks:
+      - chatgc
+
+volumes:
+  # default dir on Ubuntu: /var/lib/docker/volumes
+  mongodb:
+  mongoconfig:
+networks:
+  chatgc:
